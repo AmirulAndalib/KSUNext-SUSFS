@@ -52,7 +52,7 @@ jobs:
                                               lib32ncurses5-dev x11proto-core-dev \
                                               libx11-dev lib32z1-dev libgl1-mesa-glx \
                                               libxml2-utils xsltproc unzip \
-                                              dwarves curl pahole gcc-aarch64-linux-gnu make bc libncurses5-dev
+                                              dwarves curl pahole make bc libncurses5-dev
 
 
       - name: Install and update repo tool
