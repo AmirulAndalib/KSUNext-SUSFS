@@ -44,7 +44,9 @@ jobs:
                                       gcc-multilib libc6-dev-i386 \
                                       lib32ncurses5-dev x11proto-core-dev \
                                       libx11-dev lib32z1-dev libgl1-mesa-glx \
-                                      libxml2-utils xsltproc unzip gh pahole
+                                      libxml2-utils xsltproc unzip \
+                                      dwarves curl pahole
+
       - name: Install and update repo tool
         run: |
           sudo wget -O /usr/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
@@ -106,12 +108,18 @@ jobs:
       - name: Configure Kernel
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
-          echo "CONFIG_DEBUG_INFO_BTF=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_DEBUG_INFO_DWARF4=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_FRAME_POINTER=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_MODULES=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_MODULE_UNLOAD=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_MODULE_FORCE_LOAD=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
+          sed -i '2s/check_defconfig//' ./common/build.config.gki
       - name: Disable Kernel Debug Config
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
@@ -133,7 +141,7 @@ jobs:
       - name: Build Kernel
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v
-          ./kernel_platform/build_with_bazel.py -t pineapple gki --jobs=4 --verbose_failures
+          ./kernel_platform/build_with_bazel.py -t pineapple gki --jobs=4
       - name: Copy Kernel Image
         run: |
           cp ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/Image ./builds/${ROOT_DIR}/AnyKernel3/Image
