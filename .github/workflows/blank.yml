@@ -8,7 +8,7 @@ on:
 env:
   ROOT_DIR_PREFIX: "OP12-A15"
   BRANCH: "android14-6.1"
-  REPO_NAME: "Cabagekiller/OnePlus_KernelSU_SUSFS" 
+  REPO_NAME: "cabagekiller/KSUNext-SUSFS" 
 
 jobs:
   build:
@@ -46,15 +46,6 @@ jobs:
                                               libx11-dev lib32z1-dev libgl1-mesa-glx \
                                               libxml2-utils xsltproc unzip \
                                               dwarves curl pahole 
-
-      - name: Install specific pahole version (if needed)
-        run: |
-          sudo apt-get install -y wget
-          wget -qO- https://ftp.gnu.org/gnu/pahole/pahole-1.24.tar.gz | tar xvz
-          cd pahole-1.24
-          ./configure
-          make
-          sudo make install
 
 
       - name: Install and update repo tool
