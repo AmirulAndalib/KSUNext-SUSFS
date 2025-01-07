@@ -95,7 +95,6 @@ jobs:
       - name: Prepare and Build Kernel Module
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v
-          make mrproper  # Clean build environment
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=arch/arm64/geniezone modules
           if [ ! -f "arch/arm64/geniezone/gzvm.ko" ]; then
