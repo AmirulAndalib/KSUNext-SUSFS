@@ -93,19 +93,6 @@ jobs:
           export KSU_GIT_VERSION=$(git rev-parse HEAD)
           echo "KSU_GIT_VERSION=$KSU_GIT_VERSION" >> $GITHUB_ENV
 
-      - name: Prepare and Build Kernel Module
-        run: |
-           cd ./builds/${ROOT_DIR}/oneplus12_v
-           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- gki_defconfig
-           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
-           make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=arch/arm64/geniezone modules
-           if [ ! -f "arch/arm64/geniezone/gzvm.ko" ]; then
-             echo "Error: Module gzvm.ko not built!"
-             exit 1
-           fi
-
-
-
       - name: Add SUSFS
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
@@ -158,11 +145,6 @@ jobs:
           sed -i '/CONFIG_DEBUG_FS/d' ./common/arch/arm64/configs/gki_defconfig
           sed -i '/CONFIG_DEBUG_SECTION_MISMATCH/d' ./common/arch/arm64/configs/gki_defconfig
           echo "# Kernel debugging disabled for production build" >> ./common/arch/arm64/configs/gki_defconfig
-
-      - name: Clean the Kernel Build
-        run: |
-          cd ./builds/${ROOT_DIR}/oneplus12_v
-          make clean  # Clean up build environment
 
       - name: Verify repo sync and check kernel platform directory
         run: |
