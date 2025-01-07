@@ -92,11 +92,16 @@ jobs:
           export KSU_GIT_VERSION=$(git rev-parse HEAD)
           echo "KSU_GIT_VERSION=$KSU_GIT_VERSION" >> $GITHUB_ENV
 
-      - name: Build Single Kernel Module
+      - name: Prepare and Build Kernel Module
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v
-          make arch/arm64/geniezone/gzvm.ko
-
+          make mrproper  # Clean build environment
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=arch/arm64/geniezone modules
+          if [ ! -f "arch/arm64/geniezone/gzvm.ko" ]; then
+            echo "Error: Module gzvm.ko not built!"
+            exit 1
+          fi
 
       - name: Add SUSFS
         run: |
