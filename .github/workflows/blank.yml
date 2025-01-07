@@ -92,6 +92,12 @@ jobs:
           export KSU_GIT_VERSION=$(git rev-parse HEAD)
           echo "KSU_GIT_VERSION=$KSU_GIT_VERSION" >> $GITHUB_ENV
 
+      - name: Build Single Kernel Module
+        run: |
+          cd ./builds/${ROOT_DIR}/oneplus12_v
+          make arch/arm64/geniezone/gzvm.ko
+
+
       - name: Add SUSFS
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
