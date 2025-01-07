@@ -159,7 +159,8 @@ jobs:
       - name: Build Kernel
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v
-          ./kernel_platform/build_with_bazel.py -t pineapple gki --jobs=4 --verbose_failures V=1  # Increase verbosity
+          ./kernel_platform/build_with_bazel.py -t pineapple gki --jobs=4 --verbose_failures --verbosity=2
+
 
       - name: Copy Kernel Image
         run: |
