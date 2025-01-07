@@ -147,7 +147,7 @@ jobs:
       - name: Clean the Kernel Build
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v
-          make mrproper  # Clean up build environment
+          make clean  # Clean up build environment
 
       - name: Verify repo sync and check kernel platform directory
         run: |
