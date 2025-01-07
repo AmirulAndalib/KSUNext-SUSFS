@@ -41,11 +41,21 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y zip bc bison flex g++-multilib \
-                                      gcc-multilib libc6-dev-i386 \
-                                      lib32ncurses5-dev x11proto-core-dev \
-                                      libx11-dev lib32z1-dev libgl1-mesa-glx \
-                                      libxml2-utils xsltproc unzip \
-                                      dwarves curl pahole
+                                              gcc-multilib libc6-dev-i386 \
+                                              lib32ncurses5-dev x11proto-core-dev \
+                                              libx11-dev lib32z1-dev libgl1-mesa-glx \
+                                              libxml2-utils xsltproc unzip \
+                                              dwarves curl pahole 
+
+      - name: Install specific pahole version (if needed)
+        run: |
+          sudo apt-get install -y wget
+          wget -qO- https://ftp.gnu.org/gnu/pahole/pahole-1.24.tar.gz | tar xvz
+          cd pahole-1.24
+          ./configure
+          make
+          sudo make install
+
 
       - name: Install and update repo tool
         run: |
@@ -119,6 +129,9 @@ jobs:
           echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_DEBUG_INFO_BTF=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_BPF=y" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_BPF_SYSCALL=y" >> ./common/arch/arm64/configs/gki_defconfig
           sed -i '2s/check_defconfig//' ./common/build.config.gki
       - name: Disable Kernel Debug Config
         run: |
