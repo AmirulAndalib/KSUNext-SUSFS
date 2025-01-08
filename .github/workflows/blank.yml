@@ -66,8 +66,10 @@ jobs:
           sudo apt-get remove --purge -y dwarves
           git clone --recurse-submodules https://git.kernel.org/pub/scm/devel/pahole/pahole.git
           cd pahole
-          cmake .
+          cmake . -DCMAKE_INSTALL_PREFIX=/usr/local
+          make
           sudo make install
+          sudo ldconfig
           pahole --version
         shell: bash
 
