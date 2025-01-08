@@ -69,7 +69,7 @@ jobs:
           cmake .
           sudo make install
           pahole --version
-        shell: /usr/bin/bash -e {0}
+        shell: bash
 
       - name: Validate Kernel Configuration
         run: |
