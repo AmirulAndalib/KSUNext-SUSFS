@@ -8,7 +8,7 @@ on:
 env:
   ROOT_DIR_PREFIX: "OP12-A15"
   BRANCH: "android14-6.1"
-  REPO_NAME: "cabagekiller/KSUNext-SUSFS" 
+  REPO_NAME: "cabagekiller/KSUNext-SUSFS"
 
 jobs:
   build:
@@ -48,31 +48,28 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y zip bc bison flex g++-multilib \
-                                              gcc-multilib libc6-dev-i386 \
-                                              lib32ncurses5-dev x11proto-core-dev \
-                                              libx11-dev lib32z1-dev libgl1-mesa-glx \
-                                              libxml2-utils xsltproc unzip \
-                                              dwarves curl pahole make bc libncurses5-dev ccache
+            gcc-multilib libc6-dev-i386 lib32ncurses5-dev x11proto-core-dev \
+            libx11-dev lib32z1-dev libgl1-mesa-glx libxml2-utils xsltproc unzip \
+            dwarves curl pahole make bc libncurses5-dev ccache
 
       - name: Install required libraries for pahole
         run: |
-         sudo apt-get update
-         sudo apt-get install -y \
-           libdw-dev \
-           libelf-dev \
-           zlib1g-dev \
-           cmake
+          sudo apt-get update
+          sudo apt-get install -y \
+            libdw-dev \
+            libelf-dev \
+            zlib1g-dev \
+            cmake
 
       - name: Install Latest Pahole
         run: |
-         sudo apt-get remove --purge -y dwarves
-         git clone --recurse-submodules https://git.kernel.org/pub/scm/devel/pahole/pahole.git
-         cd pahole
-         cmake .
-         sudo make install
-         pahole --version
-  shell: /usr/bin/bash -e {0}
-
+          sudo apt-get remove --purge -y dwarves
+          git clone --recurse-submodules https://git.kernel.org/pub/scm/devel/pahole/pahole.git
+          cd pahole
+          cmake .
+          sudo make install
+          pahole --version
+        shell: /usr/bin/bash -e {0}
 
       - name: Validate Kernel Configuration
         run: |
@@ -125,8 +122,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ./builds/${ROOT_DIR}/$ZIP_NAME
-          tag_name: "v$(date +'%Y.%m.%d-%H%M%S')" 
+          tag_name: "v$(date +'%Y.%m.%d-%H%M%S')"
           name: "OP12 A15 $BRANCH With KernelSUnext & SUSFS"
-          body: "Kernel release" 
+          body: "Kernel release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
