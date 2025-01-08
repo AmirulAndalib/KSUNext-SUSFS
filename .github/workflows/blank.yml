@@ -54,6 +54,18 @@ jobs:
                                               libxml2-utils xsltproc unzip \
                                               dwarves curl pahole make bc libncurses5-dev
 
+      - name: Install Latest Pahole
+        run: |
+            sudo apt-get remove --purge -y dwarves
+            sudo apt-get update
+            sudo apt-get install -y git build-essential libdw-dev zlib1g-dev
+            git clone https://git.kernel.org/pub/scm/devel/pahole/pahole.git
+            cd pahole
+            make
+            sudo make install
+             shell: bash
+
+
       - name: Install and update repo tool
         run: |
           sudo wget -O /usr/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
