@@ -25,7 +25,6 @@ jobs:
           sudo apt-get install -qq curl
           curl -fsSL https://raw.githubusercontent.com/kou/arrow/e49d8ae15583ceff03237571569099a6ad62be32/ci/scripts/util_free_space.sh | bash
 
-
       - name: Add 16GB Swap Space
         run: |
           sudo fallocate -l 16G /swapfile
@@ -34,34 +33,16 @@ jobs:
           sudo swapon /swapfile
           echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
           free -h
-      
 
-      - name: Install bpftool from source
-        run: |
-         sudo apt-get update
-         sudo apt-get install -y git build-essential libelf-dev clang llvm
-         git clone --depth=1 https://github.com/torvalds/linux.git
-         cd linux/tools/bpf/bpftool
-         make
-         sudo cp bpftool /usr/local/bin/
-         bpftool version
-         bpftool btf dump file /sys/kernel/btf/vmlinux
-
-
-      - name: Install Kernel Headers
+      - name: Install bpftool and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y linux-headers-$(uname -r)
-
-      - name: Enable Debug Logging
-        run: |
-          echo "GITHUB_ACTIONS_DEBUG=true" >> $GITHUB_ENV
-          echo "ACTION_DEBUG=true" >> $GITHUB_ENV
-          
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+          sudo apt-get install -y git build-essential libelf-dev clang llvm linux-headers-$(uname -r)
+          git clone --depth=1 https://github.com/torvalds/linux.git
+          cd linux/tools/bpf/bpftool
+          make
+          sudo cp bpftool /usr/local/bin/
+          bpftool version
 
       - name: Install dependencies
         run: |
@@ -73,131 +54,54 @@ jobs:
                                               libxml2-utils xsltproc unzip \
                                               dwarves curl pahole make bc libncurses5-dev ccache
 
-      - name: Install Specific LLVM Version
-        run: |
-          sudo apt-get update
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 18
-          sudo apt-get install -y clang-18 llvm-18 llvm-18-tools
-          export PATH=/usr/lib/llvm-18/bin:$PATH
-          clang --version
-          
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 2G
-
       - name: Install Latest Pahole
         run: |
-            sudo apt-get remove --purge -y dwarves
-            sudo apt-get update
-            sudo apt-get install -y git build-essential libdw-dev zlib1g-dev
-            git clone --recurse-submodules https://git.kernel.org/pub/scm/devel/pahole/pahole.git
-            cd pahole
-            cmake .
-            sudo make install
-        shell: bash
+          sudo apt-get remove --purge -y dwarves
+          git clone --recurse-submodules https://git.kernel.org/pub/scm/devel/pahole/pahole.git
+          cd pahole
+          cmake .
+          sudo make install
+          pahole --version
 
-      - name: Install and update repo tool
-        run: |
-          sudo wget -O /usr/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
-          sudo chmod a+x /usr/bin/repo
-      - name: Set up directories
-        run: |
-          mkdir -p ./builds
-          cd ./builds
-          export ROOT_DIR="${ROOT_DIR_PREFIX}-$(date +'%Y-%m-%d-%I-%M-%p')-release"
-          mkdir -p "$ROOT_DIR"
-      - name: Clone repositories
-        run: |
-          cd ./builds/${ROOT_DIR}
-          git clone https://github.com/TheWildJames/AnyKernel3.git -b $BRANCH
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1
-          git clone https://github.com/TheWildJames/kernel_patches.git
-      - name: Get the kernel
-        run: |
-          cd ./builds/${ROOT_DIR}
-          mkdir oneplus12_v && cd oneplus12_v
-          repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8650 -m oneplus12_v.xml --depth=1
-          repo sync -j$(nproc) -f
-          rm -rf ./kernel_platform/common/android/abi_gki_protected_exports_*
-      - name: Add KernelSU
+      - name: Validate Kernel Configuration
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
-          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
-      - name: Set KSU_GIT_VERSION
+          grep CONFIG_DEBUG_INFO_BTF=y ./common/arch/arm64/configs/gki_defconfig || echo "CONFIG_DEBUG_INFO_BTF=y" >> ./common/arch/arm64/configs/gki_defconfig
+          grep CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT=y ./common/arch/arm64/configs/gki_defconfig || echo "CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT=y" >> ./common/arch/arm64/configs/gki_defconfig
+
+      - name: Clean and Prepare Environment
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
-          export KSU_GIT_VERSION=$(git rev-parse HEAD)
-          echo "KSU_GIT_VERSION=$KSU_GIT_VERSION" >> $GITHUB_ENV
-      - name: Add SUSFS
-        run: |
-          cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
-          echo "adding susfs"
-          cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU-Next/
-          cp ../../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
-          cp ../../susfs4ksu/kernel_patches/fs/susfs.c ./common/fs/
-          cp ../../susfs4ksu/kernel_patches/include/linux/susfs.h ./common/include/linux/
-          cp ../../susfs4ksu/kernel_patches/include/linux/susfs_def.h ./common/include/linux/ 
-          cd ./KernelSU-Next/
-          patch -p1 < 10_enable_susfs_for_ksu.patch || true
-          cd ../common
-          patch -p1 < 50_add_susfs_in_gki-android14-6.1.patch || true
-          cp ../../../kernel_patches/69_hide_stuff.patch ./
-          patch -p1 -F 3 < 69_hide_stuff.patch
-          sed -i '/obj-$(CONFIG_KSU_SUSFS_SUS_SU) += sus_su.o/d' ./fs/Makefile
-          cd ..
-          cp ../../kernel_patches/selinux.c_fix.patch ./
-          patch -p1 -F 3 < selinux.c_fix.patch
-          cp ../../kernel_patches/apk_sign.c_fix.patch ./
-          patch -p1 -F 3 < apk_sign.c_fix.patch
-          cp ../../kernel_patches/Makefile_fix.patch ./
-          patch -p1 --fuzz=3 < ./Makefile_fix.patch
-          cp ../../kernel_patches/core_hook.c_fix.patch ./
-          patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
-      - name: Configure Kernel
-        run: |
-          cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
-          echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "CONFIG_DEBUG_INFO_BTF=y" >> ./common/arch/arm64/configs/gki_defconfig
-          sed -i '2s/check_defconfig//' ./common/build.config.gki
-      - name: Disable Kernel Debug Config
-        run: |
-          cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
-          sed -i '/CONFIG_DEBUG_KERNEL/d' ./common/arch/arm64/configs/gki_defconfig
-          sed -i '/CONFIG_DEBUG_INFO/d' ./common/arch/arm64/configs/gki_defconfig
-          sed -i '/CONFIG_DEBUG_INFO_REDUCED/d' ./common/arch/arm64/configs/gki_defconfig
-          sed -i '/CONFIG_DEBUG_FS/d' ./common/arch/arm64/configs/gki_defconfig
-          sed -i '/CONFIG_DEBUG_SECTION_MISMATCH/d' ./common/arch/arm64/configs/gki_defconfig
-          echo "# Kernel debugging disabled for production build" >> ./common/arch/arm64/configs/gki_defconfig
-      - name: Verify repo sync and check kernel platform directory
-        run: |
-          cd ./builds/${ROOT_DIR}/oneplus12_v
-          if [ ! -d "kernel_platform" ]; then
-            echo "Error: kernel_platform directory does not exist!"
-            exit 1
-          fi
-          echo "Directory kernel_platform exists. Listing contents..."
-          ls -R ./kernel_platform
+          make clean
+          make mrproper
+
       - name: Build Kernel
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v
           export PATH="/usr/lib/ccache:$PATH"
-          ./kernel_platform/build_with_bazel.py -t pineapple gki
+          ./kernel_platform/build_with_bazel.py -t pineapple gki | tee build.log
+
+      - name: Debug vmlinux BTF
+        run: |
+          if [ -f ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/vmlinux ]; then
+            file ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/vmlinux
+            readelf -a ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/vmlinux
+          else
+            echo "Error: vmlinux file not found!"
+            exit 1
+          fi
+
+      - name: Upload Build Logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-logs
+          path: ./builds/${ROOT_DIR}/oneplus12_v/build.log
+
       - name: Copy Kernel Image
         run: |
           cp ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/Image ./builds/${ROOT_DIR}/AnyKernel3/Image
+
       - name: Create ZIP Package
         run: |
           cd ./builds/${ROOT_DIR}/AnyKernel3
@@ -205,6 +109,7 @@ jobs:
           zip -r "../$ZIP_NAME" ./
           ls -lh "../$ZIP_NAME"
           echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
+
       - name: Publish Release
         uses: softprops/action-gh-release@v1
         with:
