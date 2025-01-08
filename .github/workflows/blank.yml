@@ -47,8 +47,8 @@ jobs:
           echo "GITHUB_ACTIONS_DEBUG=true" >> $GITHUB_ENV
           echo "ACTION_DEBUG=true" >> $GITHUB_ENV
           
-      - name: Set up Python (using SHA)
-        uses: actions/setup-python@d4f207b0c728d8fa7bfa118d77524685d0f51c71  # Replace with latest SHA commit
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
