@@ -75,27 +75,28 @@ jobs:
 
       - name: Validate Kernel Configuration
         run: |
-          cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
+          echo "ROOT_DIR_PREFIX is: $ROOT_DIR_PREFIX"  # Debug the environment variable
+          cd ./builds/${ROOT_DIR_PREFIX}/oneplus12_v/kernel_platform || { echo "Directory not found! Exiting."; exit 1; }
           grep CONFIG_DEBUG_INFO_BTF=y ./common/arch/arm64/configs/gki_defconfig || echo "CONFIG_DEBUG_INFO_BTF=y" >> ./common/arch/arm64/configs/gki_defconfig
           grep CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT=y ./common/arch/arm64/configs/gki_defconfig || echo "CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT=y" >> ./common/arch/arm64/configs/gki_defconfig
 
       - name: Clean and Prepare Environment
         run: |
-          cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
+          cd ./builds/${ROOT_DIR_PREFIX}/oneplus12_v/kernel_platform || { echo "Directory not found! Exiting."; exit 1; }
           make clean
           make mrproper
 
       - name: Build Kernel
         run: |
-          cd ./builds/${ROOT_DIR}/oneplus12_v
+          cd ./builds/${ROOT_DIR_PREFIX}/oneplus12_v || { echo "Directory not found! Exiting."; exit 1; }
           export PATH="/usr/lib/ccache:$PATH"
           ./kernel_platform/build_with_bazel.py -t pineapple gki | tee build.log
 
       - name: Debug vmlinux BTF
         run: |
-          if [ -f ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/vmlinux ]; then
-            file ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/vmlinux
-            readelf -a ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/vmlinux
+          if [ -f ./builds/${ROOT_DIR_PREFIX}/oneplus12_v/kernel_platform/out/dist/vmlinux ]; then
+            file ./builds/${ROOT_DIR_PREFIX}/oneplus12_v/kernel_platform/out/dist/vmlinux
+            readelf -a ./builds/${ROOT_DIR_PREFIX}/oneplus12_v/kernel_platform/out/dist/vmlinux
           else
             echo "Error: vmlinux file not found!"
             exit 1
@@ -106,15 +107,15 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build-logs
-          path: ./builds/${ROOT_DIR}/oneplus12_v/build.log
+          path: ./builds/${ROOT_DIR_PREFIX}/oneplus12_v/build.log
 
       - name: Copy Kernel Image
         run: |
-          cp ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/Image ./builds/${ROOT_DIR}/AnyKernel3/Image
+          cp ./builds/${ROOT_DIR_PREFIX}/oneplus12_v/kernel_platform/out/dist/Image ./builds/${ROOT_DIR_PREFIX}/AnyKernel3/Image
 
       - name: Create ZIP Package
         run: |
-          cd ./builds/${ROOT_DIR}/AnyKernel3
+          cd ./builds/${ROOT_DIR_PREFIX}/AnyKernel3 || { echo "Directory not found! Exiting."; exit 1; }
           ZIP_NAME="Anykernel3-OP-A15-${BRANCH}-KernelSU-SUSFS-$(date +'%Y-%m-%d-%H-%M-%S').zip"
           zip -r "../$ZIP_NAME" ./
           ls -lh "../$ZIP_NAME"
@@ -123,7 +124,7 @@ jobs:
       - name: Publish Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ./builds/${ROOT_DIR}/$ZIP_NAME
+          files: ./builds/${ROOT_DIR_PREFIX}/$ZIP_NAME
           tag_name: "v$(date +'%Y.%m.%d-%H%M%S')"
           name: "OP12 A15 $BRANCH With KernelSUnext & SUSFS"
           body: "Kernel release"
