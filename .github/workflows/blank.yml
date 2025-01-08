@@ -59,11 +59,11 @@ jobs:
             sudo apt-get remove --purge -y dwarves
             sudo apt-get update
             sudo apt-get install -y git build-essential libdw-dev zlib1g-dev
-            git clone https://git.kernel.org/pub/scm/devel/pahole/pahole.git
+            git clone --recurse-submodules https://git.kernel.org/pub/scm/devel/pahole/pahole.git
             cd pahole
             make
             sudo make install
-             shell: bash
+        shell: bash
 
 
       - name: Install and update repo tool
