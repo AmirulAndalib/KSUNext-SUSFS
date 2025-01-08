@@ -101,7 +101,7 @@ jobs:
       - name: Validate Kernel Configuration
         run: |
           echo "ROOT_DIR_PREFIX is: $ROOT_DIR_PREFIX"  # Debug the environment variable
-          cd ./builds/${ROOT_DIR_PREFIX}/oneplus12_v/kernel_platform || { echo "Directory not found! Exiting."; exit 1; }
+          cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform || { echo "Directory not found! Exiting."; exit 1; }
           grep CONFIG_DEBUG_INFO_BTF=y ./common/arch/arm64/configs/gki_defconfig || echo "CONFIG_DEBUG_INFO_BTF=y" >> ./common/arch/arm64/configs/gki_defconfig
           grep CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT=y ./common/arch/arm64/configs/gki_defconfig || echo "CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT=y" >> ./common/arch/arm64/configs/gki_defconfig
 
