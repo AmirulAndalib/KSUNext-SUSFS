@@ -34,11 +34,7 @@ jobs:
           sudo swapon /swapfile
           echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
           free -h
-      - name: Verify swap space
-        run: |
-          free -h  # Verify swap space is allocated
-          swapon -s # List swap devices
-      # Clean up previous builds or cache files
+      
 
       - name: Install bpftool from source
         run: |
