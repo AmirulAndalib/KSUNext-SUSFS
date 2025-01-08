@@ -19,6 +19,11 @@ jobs:
         with:
           fetch-depth: 1 # Fetch only the latest commit
 
+      - name: Check Actions Directory
+        run: |
+          echo "Listing contents of _actions directory"
+          ls -R /home/runner/work/_actions
+
       - name: Add 16GB Swap Space
         run: |
           sudo fallocate -l 16G /swapfile
@@ -31,20 +36,21 @@ jobs:
         run: |
           free -h  # Verify swap space is allocated
           swapon -s # List swap devices
-
       # Clean up previous builds or cache files
       - name: Cleanup workspace
         run: |
           echo "Cleaning up old build files"
           rm -rf /home/runner/work/*
           free -h
-
-      - name: Install Python 3
+      - name: Enable Debug Logging
         run: |
-         sudo apt-get update
-         sudo apt-get install -y python3 python3-pip
-         python3 --version  # Verify Python installation
-         pip3 --version  # Verify pip installation
+          echo "GITHUB_ACTIONS_DEBUG=true" >> $GITHUB_ENV
+          echo "ACTION_DEBUG=true" >> $GITHUB_ENV
+          
+      - name: Set up Python (using SHA)
+        uses: actions/setup-python@d4f207b0c728d8fa7bfa118d77524685d0f51c71  # Replace with latest SHA commit
+        with:
+          python-version: '3.x'
 
       - name: Install dependencies
         run: |
@@ -55,7 +61,6 @@ jobs:
                                               libx11-dev lib32z1-dev libgl1-mesa-glx \
                                               libxml2-utils xsltproc unzip \
                                               dwarves curl pahole make bc libncurses5-dev ccache
-
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -76,21 +81,18 @@ jobs:
         run: |
           sudo wget -O /usr/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
           sudo chmod a+x /usr/bin/repo
-
       - name: Set up directories
         run: |
           mkdir -p ./builds
           cd ./builds
           export ROOT_DIR="${ROOT_DIR_PREFIX}-$(date +'%Y-%m-%d-%I-%M-%p')-release"
           mkdir -p "$ROOT_DIR"
-
       - name: Clone repositories
         run: |
           cd ./builds/${ROOT_DIR}
           git clone https://github.com/TheWildJames/AnyKernel3.git -b $BRANCH
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1
           git clone https://github.com/TheWildJames/kernel_patches.git
-
       - name: Get the kernel
         run: |
           cd ./builds/${ROOT_DIR}
@@ -98,18 +100,15 @@ jobs:
           repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8650 -m oneplus12_v.xml --depth=1
           repo sync -j$(nproc) -f
           rm -rf ./kernel_platform/common/android/abi_gki_protected_exports_*
-
       - name: Add KernelSU
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
           curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -s next
-
       - name: Set KSU_GIT_VERSION
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
           export KSU_GIT_VERSION=$(git rev-parse HEAD)
           echo "KSU_GIT_VERSION=$KSU_GIT_VERSION" >> $GITHUB_ENV
-
       - name: Add SUSFS
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
@@ -135,7 +134,6 @@ jobs:
           patch -p1 --fuzz=3 < ./Makefile_fix.patch
           cp ../../kernel_patches/core_hook.c_fix.patch ./
           patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
-
       - name: Configure Kernel
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
@@ -152,7 +150,6 @@ jobs:
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_DEBUG_INFO_BTF=y" >> ./common/arch/arm64/configs/gki_defconfig
           sed -i '2s/check_defconfig//' ./common/build.config.gki
-
       - name: Disable Kernel Debug Config
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform
@@ -162,7 +159,6 @@ jobs:
           sed -i '/CONFIG_DEBUG_FS/d' ./common/arch/arm64/configs/gki_defconfig
           sed -i '/CONFIG_DEBUG_SECTION_MISMATCH/d' ./common/arch/arm64/configs/gki_defconfig
           echo "# Kernel debugging disabled for production build" >> ./common/arch/arm64/configs/gki_defconfig
-
       - name: Verify repo sync and check kernel platform directory
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v
@@ -172,17 +168,14 @@ jobs:
           fi
           echo "Directory kernel_platform exists. Listing contents..."
           ls -R ./kernel_platform
-
       - name: Build Kernel
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v
           export PATH="/usr/lib/ccache:$PATH"
           ./kernel_platform/build_with_bazel.py -t pineapple gki
-
       - name: Copy Kernel Image
         run: |
           cp ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/Image ./builds/${ROOT_DIR}/AnyKernel3/Image
-
       - name: Create ZIP Package
         run: |
           cd ./builds/${ROOT_DIR}/AnyKernel3
@@ -190,7 +183,6 @@ jobs:
           zip -r "../$ZIP_NAME" ./
           ls -lh "../$ZIP_NAME"
           echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
-
       - name: Publish Release
         uses: softprops/action-gh-release@v1
         with:
