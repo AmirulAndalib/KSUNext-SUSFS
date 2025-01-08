@@ -52,7 +52,12 @@ jobs:
                                               lib32ncurses5-dev x11proto-core-dev \
                                               libx11-dev lib32z1-dev libgl1-mesa-glx \
                                               libxml2-utils xsltproc unzip \
-                                              dwarves curl pahole make bc libncurses5-dev
+                                              dwarves curl pahole make bc libncurses5-dev ccache
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          max-size: 2G
 
       - name: Install Latest Pahole
         run: |
@@ -170,6 +175,7 @@ jobs:
       - name: Build Kernel
         run: |
           cd ./builds/${ROOT_DIR}/oneplus12_v
+          export PATH="/usr/lib/ccache:$PATH"
           ./kernel_platform/build_with_bazel.py -t pineapple gki -j$(nproc --all) --verbose_failures --config=stamp --user_kmi_symbol_lists=//msm-kernel:android/abi_gki_aarch64_qcom --ignore_missing_projects //msm-kernel:pineapple_gki_dist //msm-kernel:pineapple_gki_dtc_dist
 
       - name: Copy Kernel Image
