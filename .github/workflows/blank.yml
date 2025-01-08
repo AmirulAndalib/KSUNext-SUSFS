@@ -61,7 +61,7 @@ jobs:
 
       - name: Install Clang and LLVM tools
         run: |
-           Add LLVM repository and install Clang and LLVM tools
+           #Add LLVM repository and install Clang and LLVM tools
            sudo apt-get update
            sudo apt-get install -y wget lsb-release gnupg
            wget -O - https://apt.llvm.org/llvm.sh | sudo bash
