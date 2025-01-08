@@ -73,6 +73,14 @@ jobs:
           pahole --version
         shell: bash
 
+      - name: Get the kernel
+        run: |
+          cd ./builds/${ROOT_DIR}
+          mkdir oneplus12_v && cd oneplus12_v
+          repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8650 -m oneplus12_v.xml --depth=1
+          repo sync -j$(nproc) -f
+          rm -rf ./kernel_platform/common/android/abi_gki_protected_exports_*
+
       - name: Validate Kernel Configuration
         run: |
           echo "ROOT_DIR_PREFIX is: $ROOT_DIR_PREFIX"  # Debug the environment variable
