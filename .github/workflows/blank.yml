@@ -39,11 +39,6 @@ jobs:
           rm -rf /home/runner/work/*
           free -h
 
-      - name: Check disk usage
-        run: |
-          df -h
-          du -sh /home/runner/work/*
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
