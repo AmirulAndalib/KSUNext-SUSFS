@@ -73,6 +73,11 @@ jobs:
           pahole --version
         shell: bash
 
+      - name: Install and update repo tool
+        run: |
+          sudo wget -O /usr/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
+          sudo chmod a+x /usr/bin/repo
+
       - name: Set up directories
         run: |
           mkdir -p ./builds
