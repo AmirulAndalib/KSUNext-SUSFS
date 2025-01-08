@@ -54,7 +54,6 @@ jobs:
                                               libxml2-utils xsltproc unzip \
                                               dwarves curl pahole make bc libncurses5-dev
 
-
       - name: Install and update repo tool
         run: |
           sudo wget -O /usr/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
@@ -133,7 +132,7 @@ jobs:
           echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
-          echo "# CONFIG_DEBUG_INFO_BTF is not set" >> ./common/arch/arm64/configs/gki_defconfig
+          echo "CONFIG_DEBUG_INFO_BTF=y" >> ./common/arch/arm64/configs/gki_defconfig
           sed -i '2s/check_defconfig//' ./common/build.config.gki
 
       - name: Disable Kernel Debug Config
@@ -161,8 +160,6 @@ jobs:
           cd ./builds/${ROOT_DIR}/oneplus12_v
           ./kernel_platform/build_with_bazel.py -t pineapple gki --jobs=4 --verbose_failures --config=stamp --user_kmi_symbol_lists=//msm-kernel:android/abi_gki_aarch64_qcom --ignore_missing_projects //msm-kernel:pineapple_gki_dist //msm-kernel:pineapple_gki_dtc_dist
 
-
-
       - name: Copy Kernel Image
         run: |
           cp ./builds/${ROOT_DIR}/oneplus12_v/kernel_platform/out/dist/Image ./builds/${ROOT_DIR}/AnyKernel3/Image
@@ -171,7 +168,7 @@ jobs:
         run: |
           cd ./builds/${ROOT_DIR}/AnyKernel3
           ZIP_NAME="Anykernel3-OP-A15-${BRANCH}-KernelSU-SUSFS-$(date +'%Y-%m-%d-%H-%M-%S').zip"
-          zip -r "../$ZIP_NAME" ./*
+          zip -r "../$ZIP_NAME" ./
           ls -lh "../$ZIP_NAME"
           echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
 
