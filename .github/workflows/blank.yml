@@ -37,11 +37,6 @@ jobs:
           free -h  # Verify swap space is allocated
           swapon -s # List swap devices
       # Clean up previous builds or cache files
-      - name: Cleanup workspace
-        run: |
-          echo "Cleaning up old build files"
-          rm -rf /home/runner/work/*
-          free -h
       - name: Enable Debug Logging
         run: |
           echo "GITHUB_ACTIONS_DEBUG=true" >> $GITHUB_ENV
