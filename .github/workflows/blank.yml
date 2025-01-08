@@ -37,7 +37,6 @@ jobs:
         run: |
           echo "Cleaning up old build files"
           rm -rf /home/runner/work/*
-          sudo rm -rf /swapfile
           free -h
 
       - name: Check disk usage
