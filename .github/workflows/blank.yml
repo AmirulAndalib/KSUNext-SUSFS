@@ -39,6 +39,23 @@ jobs:
           free -h  # Verify swap space is allocated
           swapon -s # List swap devices
       # Clean up previous builds or cache files
+
+      - name: Install bpftool
+       run: |
+         sudo apt-get update
+         sudo apt-get install -y bpftool
+         if [ ! -f /sys/kernel/btf/vmlinux ]; then
+           echo "Base BTF file not found"
+           exit 1
+         fi
+         bpftool btf dump file /sys/kernel/btf/vmlinux
+         echo "Base BTF validated"
+
+      - name: Install Kernel Headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y linux-headers-$(uname -r)
+
       - name: Enable Debug Logging
         run: |
           echo "GITHUB_ACTIONS_DEBUG=true" >> $GITHUB_ENV
@@ -59,15 +76,15 @@ jobs:
                                               libxml2-utils xsltproc unzip \
                                               dwarves curl pahole make bc libncurses5-dev ccache
 
-      - name: Install Clang and LLVM tools
+      - name: Install Specific LLVM Version
         run: |
-           #Add LLVM repository and install Clang and LLVM tools
-           sudo apt-get update
-           sudo apt-get install -y wget lsb-release gnupg
-           wget -O - https://apt.llvm.org/llvm.sh | sudo bash
-           sudo apt-get install -y clang-18 llvm-18 llvm-18-tools
-           # Ensure LLVM tools and Clang are in the PATH
-           echo "LLVM and Clang installed successfully"
+          sudo apt-get update
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 18
+          sudo apt-get install -y clang-18 llvm-18 llvm-18-tools
+          export PATH=/usr/lib/llvm-18/bin:$PATH
+          clang --version
           
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
