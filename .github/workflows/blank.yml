@@ -27,11 +27,23 @@ jobs:
           sudo swapon /swapfile
           echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
           free -h
-
       - name: Verify swap space
         run: |
           free -h  # Verify swap space is allocated
           swapon -s # List swap devices
+
+      # Clean up previous builds or cache files
+      - name: Cleanup workspace
+        run: |
+          echo "Cleaning up old build files"
+          rm -rf /home/runner/work/*
+          sudo rm -rf /swapfile
+          free -h
+
+      - name: Check disk usage
+        run: |
+          df -h
+          du -sh /home/runner/work/*
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -63,7 +75,6 @@ jobs:
             cmake .
             sudo make install
         shell: bash
-
 
       - name: Install and update repo tool
         run: |
