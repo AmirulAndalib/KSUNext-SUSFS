@@ -39,10 +39,12 @@ jobs:
           rm -rf /home/runner/work/*
           free -h
 
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: '3.x'
+      - name: Install Python 3
+        run: |
+         sudo apt-get update
+         sudo apt-get install -y python3 python3-pip
+         python3 --version  # Verify Python installation
+         pip3 --version  # Verify pip installation
 
       - name: Install dependencies
         run: |
