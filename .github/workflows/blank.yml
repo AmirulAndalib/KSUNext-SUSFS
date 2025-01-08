@@ -40,16 +40,17 @@ jobs:
           swapon -s # List swap devices
       # Clean up previous builds or cache files
 
-      - name: Install bpftool
+      - name: Install bpftool from source
         run: |
          sudo apt-get update
-         sudo apt-get install -y bpftool
-         if [ ! -f /sys/kernel/btf/vmlinux ]; then
-           echo "Base BTF file not found"
-           exit 1
-         fi
+         sudo apt-get install -y git build-essential libelf-dev clang llvm
+         git clone --depth=1 https://github.com/torvalds/linux.git
+         cd linux/tools/bpf/bpftool
+         make
+         sudo cp bpftool /usr/local/bin/
+         bpftool version
          bpftool btf dump file /sys/kernel/btf/vmlinux
-         echo "Base BTF validated"
+
 
       - name: Install Kernel Headers
         run: |
