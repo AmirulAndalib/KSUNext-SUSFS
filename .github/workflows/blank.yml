@@ -58,6 +58,14 @@ jobs:
                                               libx11-dev lib32z1-dev libgl1-mesa-glx \
                                               libxml2-utils xsltproc unzip \
                                               dwarves curl pahole make bc libncurses5-dev ccache
+
+      - name: Install Clang and LLVM tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm llvm-tools
+          # Ensure LLVM tools and Clang are in the PATH
+          echo "LLVM and Clang installed successfully"
+          
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
